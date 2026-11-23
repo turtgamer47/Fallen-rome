@@ -61,12 +61,23 @@ const FILES = [
 ];
 const NAUTILUS = {name:"Nautilus OS", desc:"Web OS", url:"https://raw.githubusercontent.com/Cra-Z-Gaming/VUSL/refs/heads/main/Other/NautilusOS"};
 const OPIUM = [
-  {name:"Opium (opium.best)",  desc:"Main site",        url:"https://opium.best/"},
-  {name:"Opium (unpkg)",       desc:"opiumbest on unpkg", url:"https://unpkg.com/opiumbest@1.0.1/index.svg"},
-  {name:"Opium #1",            desc:"Study mirror",     url:"https://storage.googleapis.com/gclassroom/study.html"},
-  {name:"Opium #2",            desc:"Study mirror",     url:"https://s3.amazonaws.com/cleverlearning/study"},
-  {name:"Opium #3",            desc:"Study mirror",     url:"https://s3.dualstack.us-east-1.amazonaws.com/cleverlearning/study"},
-  {name:"Opium #4",            desc:"Study mirror",     url:"https://storage.googleapis.com/opiumbest/study.html"},
+  // Researched from the Opium GitHub READMEs, its mirror page, and the VUS zip. Opened directly, not in about:blank.
+  {name:"Opium (official)",   desc:"opium-games.com",            url:"https://opium-games.com/"},
+  {name:"Cloudflare 1",       desc:"op1um.pages.dev",            url:"https://op1um.pages.dev"},
+  {name:"Cloudflare 2",       desc:"opiumm.pages.dev",           url:"https://opiumm.pages.dev"},
+  {name:"Cloudflare 3",       desc:"op1umm.pages.dev",           url:"https://op1umm.pages.dev"},
+  {name:"Cloudflare (alt)",   desc:"opium-games.pages.dev",      url:"https://opium-games.pages.dev"},
+  {name:"CFISD redirect",     desc:"opium-cfisd.pages.dev",      url:"https://opium-cfisd.pages.dev"},
+  {name:"CybriaTech",         desc:"opium.cybriatech.dev",       url:"https://opium.cybriatech.dev"},
+  {name:"Render",             desc:"opium-games.onrender.com",   url:"https://opium-games.onrender.com/"},
+  {name:"Testing site",       desc:"tst.opium-games.com",        url:"https://tst.opium-games.com/"},
+  {name:"Testing (Neocities)",desc:"opium-tst.neocities.org",    url:"https://opium-tst.neocities.org"},
+  {name:"Opium (opium.best)", desc:"From the VUS list",          url:"https://opium.best/"},
+  {name:"Opium (unpkg)",      desc:"opiumbest on unpkg",         url:"https://unpkg.com/opiumbest@1.0.1/index.svg"},
+  {name:"Opium study #1",     desc:"From the VUS list",          url:"https://storage.googleapis.com/gclassroom/study.html"},
+  {name:"Opium study #2",     desc:"From the VUS list",          url:"https://s3.amazonaws.com/cleverlearning/study"},
+  {name:"Opium study #3",     desc:"From the VUS list",          url:"https://s3.dualstack.us-east-1.amazonaws.com/cleverlearning/study"},
+  {name:"Opium study #4",     desc:"From the VUS list",          url:"https://storage.googleapis.com/opiumbest/study.html"},
 ];
 
 /* ---------- internals ---------- */
@@ -123,6 +134,9 @@ function cardLink(x,label){
   return `<div class="card ${ok?"":"off"}"><span class="tag">${label}</span><h3>${x.name}</h3><p>${x.desc||""}${ok?"":" (not set up yet)"}</p>${
     ok?`<button class="btn" data-url="${x.url.replace(/"/g,"&quot;")}" data-name="${x.name}">Open in about:blank</button>`:`<span class="btn">Not set up</span>`}</div>`;
 }
+function cardDirect(x,label){
+  return `<div class="card"><span class="tag">${label}</span><h3>${x.name}</h3><p>${x.desc||""}</p><a class="btn" href="${x.url.replace(/"/g,"&quot;")}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">Open</a></div>`;
+}
 function renderNav(){
   nav.innerHTML="";
   TABS.forEach(t=>{const b=document.createElement("button");b.textContent=t;
@@ -136,7 +150,7 @@ function render(){
   else if(tab==="Hubs") main.innerHTML=`<p class="note">Set URLs in the HUBS config at the top of this file.</p><div class="grid">${f(HUBS).map(h=>cardLink(h,"Hub")).join("")}</div>`;
   else if(tab==="Files") main.innerHTML=`<p class="note">These are fetched and written into the about:blank tab.</p><div class="grid">${f(FILES).map(x=>cardLink(x,"File")).join("")}</div>`;
   else if(tab==="Nautilus OS") main.innerHTML=`<div class="grid">${cardLink(NAUTILUS,"OS")}</div>`;
-  else main.innerHTML=OPIUM.length?`<div class="grid">${f(OPIUM).map(o=>cardLink(o,"Opium")).join("")}</div>`:`<p class="note">Opium folder is empty. Add links to the <code>OPIUM</code> array.</p>`;
+  else main.innerHTML=OPIUM.length?`<div class="grid">${f(OPIUM).map(o=>cardDirect(o,"Opium")).join("")}</div>`:`<p class="note">Opium folder is empty. Add links to the <code>OPIUM</code> array.</p>`;
   main.querySelectorAll("button[data-url]").forEach(b=>b.onclick=()=>openBlank(b.dataset.url,CLOAK_TITLE));
 }
 $("#q").oninput=render;
