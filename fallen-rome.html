@@ -43,7 +43,8 @@ code{background:#000;padding:2px 6px;border-radius:4px;color:var(--gold)}
    Everything opens in an about:blank tab with the page's
    code written into that tab (fetch + document.write).
    ========================================================= */
-const CLOAK_TITLE="Google Docs";
+const store={get(k,d){try{return localStorage.getItem(k)??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+let CLOAK_TITLE=store.get("fr_title","Google Docs"); // also used as the title of about:blank tabs
 // Optional CORS proxy that returns the target page's HTML, e.g. "https://your-worker.example.workers.dev/?url="
 // Needed for most third-party sites, because browsers block reading their code directly.
 const PROXY="";
@@ -88,7 +89,7 @@ const GAMES=[
   {id:"pong",name:"Pong",desc:"W/S or Up/Down vs CPU."},
 ];
 const $=s=>document.querySelector(s), main=$("#main"), nav=$("#nav");
-const TABS=["Games","Hubs","Files","Nautilus OS","Opium"];
+const TABS=["Games","Hubs","Files","Nautilus OS","Opium","Cloak","Credits"];
 let tab="Games", stop=null;
 
 /* Open a URL in about:blank and inject its code into that tab.
@@ -150,7 +151,9 @@ function render(){
   else if(tab==="Hubs") main.innerHTML=`<p class="note">Set URLs in the HUBS config at the top of this file.</p><div class="grid">${f(HUBS).map(h=>cardLink(h,"Hub")).join("")}</div>`;
   else if(tab==="Files") main.innerHTML=`<p class="note">These are fetched and written into the about:blank tab.</p><div class="grid">${f(FILES).map(x=>cardLink(x,"File")).join("")}</div>`;
   else if(tab==="Nautilus OS") main.innerHTML=`<div class="grid">${cardLink(NAUTILUS,"OS")}</div>`;
-  else main.innerHTML=OPIUM.length?`<div class="grid">${f(OPIUM).map(o=>cardDirect(o,"Opium")).join("")}</div>`:`<p class="note">Opium folder is empty. Add links to the <code>OPIUM</code> array.</p>`;
+  else if(tab==="Opium") main.innerHTML=`<p class="note">Some of these links may not work. Mirrors get blocked or go down often, so try another one if a link fails.</p>`+(OPIUM.length?`<div class="grid">${f(OPIUM).map(o=>cardDirect(o,"Opium")).join("")}</div>`:`<p class="note">Opium folder is empty. Add links to the <code>OPIUM</code> array.</p>`);
+  else if(tab==="Cloak") renderCloak();
+  else main.innerHTML=`<div class="card" style="max-width:420px"><span class="tag">Credits</span><h3>Fallen Rome</h3><p>Made by wiiwoowiiu/kolton</p></div>`;
   main.querySelectorAll("button[data-url]").forEach(b=>b.onclick=()=>openBlank(b.dataset.url,CLOAK_TITLE));
 }
 $("#q").oninput=render;
@@ -215,6 +218,46 @@ function pong(c,x,info){
   },16);
   return function(){clearInterval(t);removeEventListener("keydown",kd);removeEventListener("keyup",ku)};
 }
+
+
+/* ---------- Cloak: tab title, tab icon, panic key ---------- */
+const CLOAKS=[
+  {n:"Google Docs",     t:"Google Docs",       d:"docs.google.com"},
+  {n:"Google Classroom",t:"Classroom",         d:"classroom.google.com"},
+  {n:"Google Drive",    t:"My Drive - Google Drive", d:"drive.google.com"},
+  {n:"Canvas",          t:"Dashboard",         d:"instructure.com"},
+  {n:"Schoology",       t:"Home | Schoology",  d:"schoology.com"},
+  {n:"Clever",          t:"Clever | Portal",   d:"clever.com"},
+];
+function setIcon(domain){
+  if(!domain)return;
+  let l=document.querySelector("link[rel~='icon']");
+  if(!l){l=document.createElement("link");l.rel="icon";document.head.appendChild(l)}
+  l.href=/^https?:|^data:/.test(domain)?domain:"https://www.google.com/s2/favicons?domain="+encodeURIComponent(domain)+"&sz=64";
+}
+function applyCloak(title,icon){
+  CLOAK_TITLE=title||"Google Docs";document.title=CLOAK_TITLE;setIcon(icon);
+  store.set("fr_title",CLOAK_TITLE);store.set("fr_icon",icon||"");
+}
+let panicUrl=store.get("fr_panic","https://classroom.google.com/"),panicOn=store.get("fr_panic_on","0")==="1";
+addEventListener("keydown",e=>{if(panicOn&&e.key==="`"){e.preventDefault();location.replace(panicUrl)}});
+function renderCloak(){
+  main.innerHTML=`<p class="note">Changes how this tab looks in the tab bar. It also sets the title of about:blank tabs opened from here.</p>
+  <div class="grid">${CLOAKS.map((c,i)=>`<div class="card"><span class="tag">Preset</span><h3>${c.n}</h3><p>${c.t}</p><button class="btn" data-ck="${i}">Use this cloak</button></div>`).join("")}
+  <div class="card"><span class="tag">Custom</span><h3>Your own</h3>
+    <input id="ctitle" placeholder="Tab title" value="${CLOAK_TITLE.replace(/"/g,"&quot;")}" style="background:#120c0c;border:1px solid var(--line);color:var(--text);padding:8px;border-radius:6px">
+    <input id="cicon" placeholder="Icon: domain or image URL" value="${store.get("fr_icon","").replace(/"/g,"&quot;")}" style="background:#120c0c;border:1px solid var(--line);color:var(--text);padding:8px;border-radius:6px">
+    <button class="btn" id="capply">Apply</button></div>
+  <div class="card"><span class="tag">Panic key</span><h3>Press \` to leave</h3>
+    <p>Jumps this tab to another page instantly.</p>
+    <input id="purl" value="${panicUrl.replace(/"/g,"&quot;")}" style="background:#120c0c;border:1px solid var(--line);color:var(--text);padding:8px;border-radius:6px">
+    <label style="font-size:13px"><input type="checkbox" id="pon" ${panicOn?"checked":""}> Enabled</label>
+    <button class="btn" id="psave">Save</button></div></div>`;
+  main.querySelectorAll("[data-ck]").forEach(b=>b.onclick=()=>{const c=CLOAKS[b.dataset.ck];applyCloak(c.t,c.d);renderCloak()});
+  $("#capply").onclick=()=>applyCloak($("#ctitle").value,$("#cicon").value);
+  $("#psave").onclick=()=>{panicUrl=$("#purl").value||panicUrl;panicOn=$("#pon").checked;store.set("fr_panic",panicUrl);store.set("fr_panic_on",panicOn?"1":"0")};
+}
+document.title=CLOAK_TITLE;setIcon(store.get("fr_icon",""));
 
 /* Offer to relaunch this whole site inside about:blank (code injected). */
 if(window.top===window.self && location.protocol!=="about:" && !window.FR_BASE){
